@@ -1,1 +1,11 @@
-# Electronics service configuration
+apiVersion: v1
+kind: Service
+metadata:
+  name: electronics-service
+spec:
+  type: ClusterIP
+  selector:
+    app: electronics
+  ports:
+  - port: 80
+    targetPort: 80
