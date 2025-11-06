@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: earphones
-        image: 049061799945.dkr.ecr.ap-northeast-1.amazonaws.com/google-store-earphones:52158326034c86ce2f3c9063a0aadbebb8efa6bb
+        image: 049061799945.dkr.ecr.ap-northeast-1.amazonaws.com/google-store-earphones:d4ac6a48ce337cdf8fd3d1f6a32e0e9bc4fed3da
         ports:
         - containerPort: 80
