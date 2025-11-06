@@ -3,9 +3,9 @@ kind: Service
 metadata:
   name: electronics-service
 spec:
-  type: ClusterIP
   selector:
     app: electronics
   ports:
-  - port: 80
+  - protocol: TCP
+    port: 80
     targetPort: 80
