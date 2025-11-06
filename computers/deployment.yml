@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: computers
-        image: <YOUR_ECR_URL>/computers:latest
+        image: <placeholder>
         ports:
         - containerPort: 80
