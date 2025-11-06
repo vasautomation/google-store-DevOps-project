@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: main-frontend-deployment
+  labels:
+    app: main-frontend
 spec:
   replicas: 2
   selector:
@@ -14,6 +16,6 @@ spec:
     spec:
       containers:
       - name: main-frontend
-        image: <YOUR_ECR_URL>/root-frontend:latest
+        image: <YOUR_ECR_URL>/frontend:latest
         ports:
         - containerPort: 80
