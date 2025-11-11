@@ -168,6 +168,379 @@
   </div>
 </footer>
 
+
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" style="display:none">
+  <div class="modal-card" role="document" style="max-width: 480px;">
+    <button id="paymentClose" class="close" aria-label="Close" style="top:10px;right:10px;position:absolute;">✕</button>
+    <div style="padding: 32px 24px 24px;">
+      <h2 style="margin-top:0">Payment</h2>
+      <p class="muted">Choose your payment method:</p>
+      <div style="margin: 24px 0;">
+        <button class="btn primary" onclick="showPaymentTab('UPI')">UPI</button>
+        <button class="btn ghost" onclick="showPaymentTab('Netbanking')">Net Banking</button>
+        <button class="btn ghost" onclick="showPaymentTab('Card')">Credit/Debit Card</button>
+      </div>
+      <!-- Show Total Amount in Payment Modal -->
+      <div id="totalAmountWrapper" style="margin-bottom: 24px; text-align:center;">
+        <span style="font-size:1.1em;color:#fff;">Total Amount to Pay:&nbsp;</span>
+        <span id="totalPaymentAmount" style="font-weight:bold;font-size:1.25em;color:#4dd784;">₹0</span>
+      </div>
+      <div id="paymentUPI" style="display:none;">
+        <div style="margin-bottom:1em;">Pay to UPI ID: <strong>6303965190@kotak811</strong></div>
+        <!-- INSERTED QR IMAGE -->
+        <img src="https://i.ibb.co/84GXkSMt/pay.jpg" alt="UPI QR" style="display:block;margin:0 auto 1em auto;width:150px;height:150px;object-fit:contain;background:#fff;border-radius:8px;">
+        <!-- (optional) If you want to also keep the generated QR, uncomment below: -->
+        <!-- <canvas id="upiQR" style="display:none;margin:0 auto 1em auto;" width="150" height="150"></canvas> -->
+        <input id="upiInput" type="text" value="6303965190@kotak811" readonly style="width:100%;padding:6px;margin-bottom:1em;text-align:center;" onclick="this.select()">
+        <div style="font-size:0.95em;color:#aaa; text-align:center;">Scan QR with any UPI app or copy/paste UPI ID</div>
+        <button class="btn small" style="margin-top:1em" onclick="copyUPIID()">Copy UPI ID</button>
+      </div>
+      <div id="paymentNetbanking" style="display:none;">
+        <form id="netbankingForm" onsubmit="event.preventDefault(); handlePaymentDone('Netbanking');">
+          <label style="display:block; margin-bottom:8px;">Bank
+            <select required style="width:100%;padding:6px;">
+              <option value="">Choose bank</option>
+              <option>SBI</option>
+              <option>HDFC Bank</option>
+              <option>Kotak Mahindra</option>
+              <option>ICICI Bank</option>
+              <option>Axis Bank</option>
+              <option>Other...</option>
+            </select>
+          </label>
+          <label style="display:block; margin-bottom:8px;">User ID
+            <input type="text" required style="width:100%;padding:6px;" />
+          </label>
+          <label style="display:block; margin-bottom:16px;">Password
+            <input type="password" required style="width:100%;padding:6px;" autocomplete="off"/>
+          </label>
+          <button class="btn primary" type="submit" style="width:100%;">Pay Now</button>
+        </form>
+      </div>
+      <div id="paymentCard" style="display:none;">
+        <form id="cardPaymentForm" onsubmit="event.preventDefault(); handlePaymentDone('Card');">
+          <label style="display:block; margin-bottom:8px;">Card Number
+            <input type="text" maxlength="19" pattern="\d*" inputmode="numeric" placeholder="XXXX XXXX XXXX XXXX" required style="width:100%;padding:6px;" />
+          </label>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <label style="flex:1;">Expiry
+              <input type="text" maxlength="5" pattern="\d{2}/\d{2}" placeholder="MM/YY" required style="width:100%;padding:6px;" />
+            </label>
+            <label style="flex:1;">CVV
+              <input type="password" maxlength="4" pattern="\d{3,4}" placeholder="CVV" required style="width:100%;padding:6px;" />
+            </label>
+          </div>
+          <label style="display:block; margin-bottom:16px;">Name on card
+            <input type="text" required style="width:100%;padding:6px;" />
+          </label>
+          <button class="btn primary" type="submit" style="width:100%;">Pay Now</button>
+        </form>
+      </div>
+      <!-- Receipt Modal (hidden initially) -->
+      <div id="receiptModal" style="display:none; background: #1e1e1e; border-radius: 8px; box-shadow:0 0 8px #0007; padding:28px 24px 24px 24px; text-align:center; margin-top:16px;">
+        <h3 style="color:#4dd784; margin-bottom:0.5em;">Payment Successful!</h3>
+        <div class="muted" style="margin-bottom:1em;">Thank you for your purchase.<br>Your payment has been received. <br>You can now view or download your receipt.</div>
+        <button class="btn primary" onclick="viewReceipt()">View Receipt</button>
+        <button class="btn ghost" style="margin-left:12px" onclick="downloadReceipt()">Download Receipt</button>
+      </div>
+      <!-- End receipt modal section -->
+    </div>
+  </div>
+</div>
+<style>
+#paymentModal[aria-hidden="false"] { display: flex !important; align-items: center; justify-content: center; }
+#paymentModal .modal-card { background: #161616; border-radius: 10px; box-shadow: 0 4px 32px #0008; }
+</style>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <strong>Google Store</strong>
+        <p class="muted">developed by abinash kumar</p>
+      </div>
+      <div class="muted">© <span id="year"></span></div>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js" defer></script>
+<script>
+// --- Receipt Data Extraction ---
+// Helper to extract product details from cart DOM nodes (assuming cart item format)
+// We will try to extract: name, price, quantity (if available), description (if available), and image (if available)
+
+// Updated extractCartProducts to get the image src (if any)
+function extractCartProducts() {
+  const cartListElem = document.getElementById('cartList');
+  if (!cartListElem || cartListElem.children.length === 0) return [];
+  let products = [];
+  for (const child of Array.from(cartListElem.children)) {
+    let name = '', price = '', qty = 1, desc = '', img = '';
+
+    if (child.querySelector) {
+      let el;
+      if ((el = child.querySelector('.cart-name'))) name = el.textContent.trim();
+      if ((el = child.querySelector('.cart-price'))) price = el.textContent.trim();
+      if ((el = child.querySelector('.cart-qty'))) qty = Number(el.textContent.trim()) || 1;
+      if ((el = child.querySelector('.cart-desc'))) desc = el.textContent.trim();
+
+      // Try to extract product image
+      // Accepts .cart-img or <img> within cart item
+      if ((el = child.querySelector('.cart-img')) && el.tagName.toLowerCase() === 'img') {
+        img = el.src;
+      } else if ((el = child.querySelector('img'))) {
+        img = el.src;
+      }
+
+      if (!name || !price) {
+        let text = child.textContent || '';
+        let priceMatch = text.match(/₹\s*([0-9,.]+)/);
+        if (priceMatch) price = '₹' + priceMatch[1];
+        let qtyMatch = text.match(/x\s*(\d+)/);
+        if (qtyMatch) qty = parseInt(qtyMatch[1]);
+        if (priceMatch) {
+          const beforePrice = text.slice(0, priceMatch.index).trim();
+          name = beforePrice.replace(/x\s*\d+$/, '').trim();
+        } else {
+          name = text.split('₹')[0].replace(/x\s*\d+$/, '').trim();
+        }
+      }
+    } else {
+      let text = child.textContent || '';
+      let priceMatch = text.match(/₹\s*([0-9,.]+)/);
+      if (priceMatch) price = '₹' + priceMatch[1];
+      let qtyMatch = text.match(/x\s*(\d+)/);
+      if (qtyMatch) qty = parseInt(qtyMatch[1]);
+      name = text.split('₹')[0].replace(/x\s*\d+$/, '').trim();
+    }
+
+    products.push({
+      name,
+      price,
+      qty,
+      desc,
+      img
+    });
+  }
+  return products;
+}
+
+// Payment Modal Logic
+const paymentModal = document.getElementById('paymentModal');
+const paymentTabs = {
+  UPI: document.getElementById('paymentUPI'),
+  Netbanking: document.getElementById('paymentNetbanking'),
+  Card: document.getElementById('paymentCard')
+};
+function showPaymentTab(tab) {
+  Object.values(paymentTabs).forEach(t => t.style.display = 'none');
+  paymentTabs[tab].style.display = '';
+  // Hide receipt area if toggling between payment options
+  hideReceipt();
+  // Since QR image is static, don't call generateUPIQR here anymore
+}
+function openPaymentModal() {
+  paymentModal.style.display = 'flex';
+  paymentModal.setAttribute('aria-hidden', 'false');
+  showPaymentTab('UPI');
+  // Show total amount in payment modal
+  updateTotalPaymentAmount();
+  hideReceipt();
+}
+function closePaymentModal() {
+  paymentModal.style.display = 'none';
+  paymentModal.setAttribute('aria-hidden', 'true');
+  hideReceipt();
+}
+document.getElementById('paymentClose').onclick = closePaymentModal;
+
+function hideReceipt() {
+  const receiptDiv = document.getElementById("receiptModal");
+  if (receiptDiv) receiptDiv.style.display = 'none';
+}
+
+// If you ever want to bring back dynamic QR, you could update generateUPIQR() to update the image src instead
+function generateUPIQR() {
+  // QR is now static image, so nothing needed here
+}
+function copyUPIID() {
+  const input = document.getElementById("upiInput");
+  input.select();
+  input.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+  alert("UPI ID Copied: " + input.value);
+}
+
+// Show receipt after payment done
+function handlePaymentDone(method) {
+  // Hide payment forms/tabs
+  Object.values(paymentTabs).forEach(t => t.style.display = 'none');
+  var receiptDiv = document.getElementById("receiptModal");
+  if(receiptDiv){
+    receiptDiv.style.display = 'block';
+  }
+  // You may clear the cart here, or after viewing/downloading receipt
+  // (uncomment if you want to clear cart now)
+  // clearCartAfterPayment();
+}
+
+// Enhanced: receipt with product, purchased details, and product small image
+function viewReceipt() {
+  const date = new Date();
+  const total = document.getElementById('totalPaymentAmount').textContent;
+  let products = extractCartProducts();
+  let itemsHTML = '';
+
+  if (products.length > 0) {
+    itemsHTML = `<table style="width:100%;border-collapse:collapse;font-size:1em;">
+      <thead>
+        <tr>
+          <th style="border-bottom:1px solid #eee;text-align:left;padding:4px 0;">Product</th>
+          <th style="border-bottom:1px solid #eee;text-align:center;padding:4px 0;">Qty</th>
+          <th style="border-bottom:1px solid #eee;text-align:right;padding:4px 0;">Price</th>
+        </tr>
+      </thead>
+      <tbody>
+      ${products.map(p => `
+        <tr>
+          <td style="padding:3px 0;display:flex;align-items:center;gap:7px;">
+            ${p.img ? `<img src="${p.img}" alt="${p.name||'Product'}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;border:1px solid #eee;margin-right:7px;background:#fff;">` : ''}
+            <div>
+              ${p.name ? `<b>${p.name}</b>` : ''}
+              ${p.desc ? `<div style="font-size:0.85em;color:#888;">${p.desc}</div>` : ''}
+            </div>
+          </td>
+          <td style="text-align:center;padding:3px 0;">${p.qty || 1}</td>
+          <td style="text-align:right;padding:3px 0;">${p.price || ''}</td>
+        </tr>
+      `).join('')}
+      </tbody>
+    </table>`;
+  } else {
+    itemsHTML = 'Purchased Phones<br>';
+  }
+
+  const receiptHtml = `
+    <div style="font-family:sans-serif;max-width:430px;margin:0 auto;border:1px solid #eee;border-radius:8px;padding:24px;box-shadow:0 2px 8px #0002;">
+      <h2 style="text-align:center;color:#4dd784;margin-top:0;">Google Store - Receipt</h2>
+      <div style="font-size:1.05em;margin:10px 0;"><b>Date:</b> ${date.toLocaleString()}</div>
+      <div style="margin:15px 0 14px 0;"><b>Purchased Items:</b></div>
+      <div style="margin-bottom:12px">${itemsHTML}</div>
+      <div style="font-size:1.2em;margin-bottom:20px;"><b>Total Paid:</b> <span style="color:#4dd784;">${total}</span></div>
+      <div style="margin-bottom:18px;color:#5c5c5c;">Payment Successful via Card/NetBanking/UPI</div>
+      <div style="font-size:0.9em;color:#333;text-align:center;">Developed by abinash kumar</div>
+    </div>
+  `;
+  const viewWin = window.open("", '_blank','width=480,height=600');
+  if(viewWin){
+    viewWin.document.write('<title>Google Store Receipt</title>');
+    viewWin.document.write(receiptHtml);
+    viewWin.document.close();
+  }
+}
+
+// Download receipt as text file (with products)
+function downloadReceipt() {
+  const date = new Date();
+  const total = document.getElementById('totalPaymentAmount').textContent;
+  let products = extractCartProducts();
+  let itemsText = '';
+  
+  if (products.length > 0) {
+    itemsText += 'Products Purchased:' + "\n";
+    products.forEach(p => {
+      itemsText += `- ${p.name || 'Product'}${p.desc ? ` (${p.desc})`:''} | Qty: ${p.qty || 1} | Price: ${p.price || ''}\n`;
+    });
+  } else {
+    itemsText = '- Purchased Phones\n';
+  }
+
+  const receiptTxt = 
+`Google Store Receipt
+----------------------------
+Date: ${date.toLocaleString()}
+${itemsText}
+----------------------------
+Total Paid: ${total}
+Payment Successful!
+----------------------------
+Developed by abinash kumar
+`;
+  const blob = new Blob([receiptTxt],{type:'text/plain'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `GoogleStore_Receipt_${Date.now()}.txt`;
+  link.click();
+}
+
+// Update the total amount in Payment Modal from cart
+function updateTotalPaymentAmount() {
+  let total = 0;
+  // Try to get the total from #cartTotal if available
+  const cartTotalElem = document.getElementById('cartTotal');
+  if (cartTotalElem) {
+    // Try to parse ₹ amounts
+    const value = cartTotalElem.textContent || '';
+    const n = value.replace(/[^0-9.]/g,'');
+    if (n) total = parseFloat(n);
+  }
+  // If you have cart stored somewhere else, sum up here as needed
+  const paymentAmountElem = document.getElementById('totalPaymentAmount');
+  if(paymentAmountElem) {
+    paymentAmountElem.textContent = '₹' + (isNaN(total) ? '0' : total);
+  }
+}
+
+// Optionally clear cart after payment
+function clearCartAfterPayment() {
+  const cartList = document.getElementById("cartList");
+  if(cartList) cartList.innerHTML = "";
+  const cartTotal = document.getElementById("cartTotal");
+  if(cartTotal) cartTotal.textContent = '₹0';
+  const cartCount = document.getElementById("cartCount");
+  if(cartCount) cartCount.textContent = '0';
+}
+
+// Attach event to checkout button
+document.addEventListener('DOMContentLoaded', function() {
+  const checkoutBtn = document.getElementById('checkout');
+  if(checkoutBtn){
+    checkoutBtn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      openPaymentModal();
+    });
+  }
+  // Keep total in payment modal synced with cartTotal on open, or if cart changes
+  const cartTotalElem = document.getElementById('cartTotal');
+  if(cartTotalElem) {
+    const observer = new MutationObserver(updateTotalPaymentAmount);
+    observer.observe(cartTotalElem, {childList:true, characterData:true, subtree:true});
+  }
+  // Add UPI "payment" complete simulation (since it's not submitting a form)
+  const upiBtn = document.createElement('button');
+  upiBtn.type = "button";
+  upiBtn.textContent = "I've Paid via UPI";
+  upiBtn.className = "btn primary";
+  upiBtn.style = "margin-top:1.5em; width:100%";
+  upiBtn.onclick = function(){ handlePaymentDone('UPI'); }
+  const upiDiv = document.getElementById('paymentUPI');
+  if(upiDiv && !document.getElementById("upiPaidBtn")){
+    upiBtn.id = "upiPaidBtn";
+    upiDiv.appendChild(upiBtn);
+  }
+});
+
+// Close modal on outside click
+paymentModal.addEventListener('mousedown', function(e) {
+  if (e.target == paymentModal)
+    closePaymentModal();
+});
+</script>
+  
 <script src="script.js" defer></script>
 </body>
 </html>
+
