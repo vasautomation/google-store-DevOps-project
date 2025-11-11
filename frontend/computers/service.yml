@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: computers-frontend-service
+  name: computers-service
   labels:
-    app: computers-frontend
+    app: computers
 spec:
   type: ClusterIP
   selector:
-    app: computers-frontend
+    app: computers
   ports:
     - protocol: TCP
       port: 80
