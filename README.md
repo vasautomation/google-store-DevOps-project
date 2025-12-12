@@ -1,3 +1,4 @@
+![Project Image](https://i.ibb.co/t9WR8c8/drawing.png)
 #!/bin/bash
 
 # --- 1. EKSCTL AND KUBECTL INSTALLATION ---
@@ -95,4 +96,4 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 echo ""
 echo "--- Installation Script Complete ---"
 
-![Project Image](https://i.ibb.co/t9WR8c8/drawing.png)
+
