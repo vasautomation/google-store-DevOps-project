@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/Naveen-cloud-DevOps/google-store-DevOps-project.git
     targetRevision: main
-    path: frontend/googlegrocery
+    path: frontend/googlegrocery/
   destination:
     server: https://kubernetes.default.svc
     namespace: google
