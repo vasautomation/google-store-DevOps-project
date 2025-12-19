@@ -13,7 +13,7 @@ CORS(app)
 db = {
     "host": "database-1.co7gq0umseaq.us-east-1.rds.amazonaws.com",    # ==> your host
     "user": "admin",
-    "password": "Cloud123",
+    "password": "Vaseem123456",
     "database": "" # ===> your db
 }
 
